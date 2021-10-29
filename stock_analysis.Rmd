@@ -1,0 +1,83 @@
+---
+title: "stock_analysis"
+author: "Pradeep Raj Thapaliya"
+date: "10/24/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Import Libraries
+
+Import Required Libraries 
+```{r}
+library(ggplot2) 
+library(Metrics)
+library(patchwork)
+
+companies <- c("GOOGLE", "APPLE", "TESLA")
+
+```
+
+
+#Load Dataset
+
+Loading datasets for Apple, Google and Tesla
+
+```{r}
+
+# Load the dataset
+stock.df <- read.csv(file="data/all_company_stock.csv")
+stock.df <- stock.df[, c("Open","High","Low","Close","Volume","Adjusted","Date", "Company.Name")]
+head(stock.df)
+tail(stock.df) 
+```
+
+#Summary of Data
+
+```{r}
+#summary of the stocks for each company
+for (company in companies) {
+  print(company)
+  print(summary(stock.df[stock.df$Company.Name == company, ]))
+}
+
+```
+#Plots and Charts
+
+Plotting close value over the time for each stock data set;
+
+```{r}
+apple.plot.box <- ggplot(apple.stock.df, aes(y=AAPL.Close)) +geom_boxplot(alpha=0.3)
+google.plot.box <- ggplot(google.stock.df, aes(y=GOOGL.Close)) +geom_boxplot(alpha=0.3)
+tesla.plot.box <- ggplot(tesla.stock.df, aes(y=TSLA.Close)) +geom_boxplot(alpha=0.3)
+
+#library(patchwork)
+plot.box.close <- apple.plot.box + google.plot.box + tesla.plot.box + plot_annotation(
+  title = "Apple, Google, Tesla : Close Value",
+  caption = "A Boxplot of Close value for Apple, Google, and Tesla")
+plot.box.close
+
+```
+
+```{r}
+ggplot(data = apple.stock.df, aes(x= AAPL.Date, y = AAPL.Close)) +geom_line(color = "#FC4E07", size = 2)
+
+```
+# Dataset
+```{r}
+
+company_list = c(apple.stock.df, google.stock.df, tesla.stock.df)
+company_name = ["APPLE", "GOOGLE", "MICROSOFT", "AMAZON"]
+
+for company, com_name in zip(company_list, company_name):
+    company["company_name"] = com_name
+    
+df = pd.concat(company_list, axis=0)
+df.tail(10)
+
+```
+
+
