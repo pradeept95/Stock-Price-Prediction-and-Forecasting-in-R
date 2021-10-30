@@ -50,12 +50,20 @@ for (company in companies) {
 Plotting close value over the time for each stock data set;
 
 ```{r}
-apple.plot.box <- ggplot(apple.stock.df, aes(y=AAPL.Close)) +geom_boxplot(alpha=0.3)
-google.plot.box <- ggplot(google.stock.df, aes(y=GOOGL.Close)) +geom_boxplot(alpha=0.3)
-tesla.plot.box <- ggplot(tesla.stock.df, aes(y=TSLA.Close)) +geom_boxplot(alpha=0.3)
 
+plots <- NULL
+
+for (company in companies) { 
+  
+  df <- stock.df[stock.df$Company.Name == company, ]
+  print(head(df))
+  
+  plt <- ggplot(df, aes(y=Close)) +geom_boxplot(alpha=0.3)
+  plots <- plots + plt
+}
+ 
 #library(patchwork)
-plot.box.close <- apple.plot.box + google.plot.box + tesla.plot.box + plot_annotation(
+plot.box.close <- plots + plot_annotation(
   title = "Apple, Google, Tesla : Close Value",
   caption = "A Boxplot of Close value for Apple, Google, and Tesla")
 plot.box.close
