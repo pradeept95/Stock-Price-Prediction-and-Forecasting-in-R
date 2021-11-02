@@ -14,8 +14,11 @@ knitr::opts_chunk$set(echo = TRUE)
 Import Required Libraries 
 ```{r}
 library(ggplot2) 
-library(Metrics)
-library(patchwork)
+library(plotly)  # for interactive plots 
+theme_set(theme_minimal())  
+
+
+library(Metrics) 
 
 companies <- c("GOOGLE", "APPLE", "TESLA")
 
@@ -31,8 +34,32 @@ Loading datasets for Apple, Google and Tesla
 # Load the dataset
 stock.df <- read.csv(file="data/all_company_stock.csv")
 stock.df <- stock.df[, c("Open","High","Low","Close","Volume","Adjusted","Date", "Company.Name")]
+
+stock.df$Date <- as.Date(stock.df$Date, format="%Y-%m-%d")
+
 head(stock.df)
 tail(stock.df) 
+
+```
+
+# Dimension of the data
+```{r}
+# getting dimensions
+for (company in companies) {
+  print(company)
+  print(dim(stock.df[stock.df$Company.Name == company, ]))
+}
+
+```
+```{r}
+
+# Inspect variables
+# getting dimensions
+for (company in companies) {
+  print(company)
+  print(str(stock.df[stock.df$Company.Name == company, ]))
+}
+ 
 ```
 
 #Summary of Data
@@ -51,41 +78,77 @@ Plotting close value over the time for each stock data set;
 
 ```{r}
 
-plots <- NULL
+## Graph Returns closing prices 
+plt <- ggplot(stock.df, aes(x= Date, y = Close, colour = Company.Name)) +
+  geom_line() + theme_bw() + labs(title = "", x = "Date", y= "Closing Price", subtitle = "")
 
-for (company in companies) { 
-  
-  df <- stock.df[stock.df$Company.Name == company, ]
-  print(head(df))
-  
-  plt <- ggplot(df, aes(y=Close)) +geom_boxplot(alpha=0.3)
-  plots <- plots + plt
-}
- 
-#library(patchwork)
-plot.box.close <- plots + plot_annotation(
-  title = "Apple, Google, Tesla : Close Value",
-  caption = "A Boxplot of Close value for Apple, Google, and Tesla")
-plot.box.close
+ggplotly(plt)
 
+```
+```{r}
+
+## Graph Returns Volume traded 
+plt <- ggplot(stock.df, aes(x= Date, y = Volume, colour = Company.Name)) +
+  geom_line() + theme_bw() + labs(title = "", x = "Date", y= "Volume", subtitle = "")
+
+ggplotly(plt)
+
+```
+
+
+
+```{r}
+
+# Area plot
+ggplot(stock.df) + 
+  geom_area(aes(x = Date, y = Close, color = Company.Name, fill = Company.Name), 
+            alpha = 0.5, position = position_dodge(0.8)) +
+  scale_color_manual(values = c("red", "gray" , "blue")) +
+  scale_fill_manual(values =  c("red", "gray" , "blue"))
+
+
+```
+
+
+```{r}
+
+df<- stock.df[stock.df$Company.Name == "GOOGLE", ]
+
+# Multiple line plot
+p <- ggplot(df) + 
+  geom_line(aes(x = Date, y = Low, color = "Low")) + 
+  geom_line(aes(x = Date, y = High, color = "High")) + 
+  labs(title = "", x = "Date", y= "High and Low Values", subtitle = "Google Dataset", color = "Google") +
+  theme_classic()
+
+p
 ```
 
 ```{r}
-ggplot(data = apple.stock.df, aes(x= AAPL.Date, y = AAPL.Close)) +geom_line(color = "#FC4E07", size = 2)
 
+df<- stock.df[stock.df$Company.Name == "APPLE", ]
+
+# Multiple line plot
+p <- ggplot(df) + 
+  geom_line(aes(x = Date, y = Low, color = "Low")) + 
+  geom_line(aes(x = Date, y = High, color = "High")) + 
+  labs(title = "", x = "Date", y= "High and Low Values", subtitle = "Apple Dataset", color = "Apple") +
+  theme_classic()
+
+p
 ```
-# Dataset
+
 ```{r}
 
-company_list = c(apple.stock.df, google.stock.df, tesla.stock.df)
-company_name = ["APPLE", "GOOGLE", "MICROSOFT", "AMAZON"]
+df<- stock.df[stock.df$Company.Name == "TESLA", ]
 
-for company, com_name in zip(company_list, company_name):
-    company["company_name"] = com_name
-    
-df = pd.concat(company_list, axis=0)
-df.tail(10)
+# Multiple line plot
+p <- ggplot(df) + 
+  geom_line(aes(x = Date, y = Low, color = "Low")) + 
+  geom_line(aes(x = Date, y = High, color = "High")) + 
+  labs(title = "", x = "Date", y= "High and Low Values", subtitle = "Tesla Dataset", color = "Tesla") +
+  theme_classic()
 
+p
 ```
-
 

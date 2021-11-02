@@ -1,0 +1,117 @@
+---
+title: "fb_prophet"
+author: "Pradeep Raj Thapaliya"
+date: "10/30/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+#install.packages('prophet')
+
+
+library(prophet)
+library(tidyverse)
+
+companies <- c("GOOGLE", "APPLE", "TESLA") 
+version.file <- paste("models/prophet/", "version.RSD", sep = "")
+
+```
+
+```{r}
+
+# Load the dataset
+stock.df <- read.csv(file="data/all_company_close_stock.csv")
+head(stock.df)
+tail(stock.df)
+
+```
+
+Creating models and adding to the models list;
+
+```{r}
+
+create_version <- function(){ 
+    version <- 0;
+    saveRDS(version, file = version.file) 
+}
+# Uncomment to set the version number from 1
+#create_version()
+
+update_version <- function(){ 
+  
+    latest_version <- readRDS(file = version.file)
+    print(latest_version)
+    saveRDS(latest_version + 1, file = version.file) 
+}
+ 
+create_model <- function(){ 
+  update_version();
+  latest_version <- readRDS(file = version.file)
+  for (company in companies) {
+    
+    print(paste("-------------------------", company, "--------------------------------------"))
+    print("Preparing data to build model")
+    
+    # Preparing data set for company
+    df <- stock.df[stock.df$Company.Name == company, ]
+    
+    # Using Date and Close Column; 
+    df <- df[, c('Date', 'Close')]
+    
+    # Changing Date to "ds" and Close to "y"
+    colnames(df) <- c('ds', 'y')
+    
+    
+    # Building prophet model
+    print("Building Model")
+    model <- prophet(df, daily.seasonality=TRUE)
+  
+    # Adding to the model List
+    print("Saving Model")
+    
+    file.name <- paste("models/prophet/", "V",latest_version, "_", company, ".RSD", sep = "")
+    print(file.name)
+    saveRDS(model, file= file.name)  # Save model
+    
+    #to read model; use following
+    #m <- readRDS(file="model.RDS")  # Load model
+   
+    print("Model creation successful")
+    
+  } 
+  
+}
+
+#create_model()
+
+
+```
+ 
+```{r}
+
+latest_version <- readRDS(file = version.file)
+file.name <- paste("models/prophet/", "V",latest_version, "_GOOGLE", ".RSD", sep = "")
+m <- readRDS(file=file.name)  # Load model
+
+# Creating data-frame for forecast
+future.df <- make_future_dataframe(m, periods = 365)
+tail(future.df)
+
+# Forecast
+forecast.google <- predict(m, future.df)
+tail(forecast.google[c("ds", "yhat", "yhat_lower", "yhat_upper")])
+
+```
+
+```{r}
+
+# Plot the model
+dyplot.prophet(m, forecast.google)
+prophet_plot_components(m, forecast.google)
+
+```
