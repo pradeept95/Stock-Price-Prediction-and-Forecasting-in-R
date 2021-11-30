@@ -87,35 +87,102 @@ create_model <- function(){
   } 
   
 }
-create_model()
+#create_model()
 
 ```
- 
+
+## Analysis for Google stock using Uni-Variate Model
 ```{r}
 
 latest_version <- readRDS(file = version.file)
 file.name <- paste("models/prophet/", "V",latest_version, "_GOOGLE", ".RSD", sep = "")
+print(file.name)
 
 #Loading model
 m <- readRDS(file=file.name)  # Load model
 
 # Creating data-frame for forecast
-future.df <- make_future_dataframe(m, periods = 365)
+future.df <- make_future_dataframe(m, periods = 60)
 tail(future.df)
 
 # Forecast
-forecast.google <- predict(m, future.df)
-tail(forecast.google[c("ds", "yhat", "yhat_lower", "yhat_upper")])
+forecast.google <- predict(m, future.df) 
 
-```
-
-```{r}
+#Exploring forecast results
+pred_uni <- forecast.google[c("ds", "yhat", "yhat_lower", "yhat_upper")]
+tail(pred_uni)
 
 # Plot the model
 dyplot.prophet(m, forecast.google)
 prophet_plot_components(m, forecast.google)
 
+
+# pred_uni$ds <- as.Date(pred_uni$ds, format="%Y-%m-%d")
+# 
+# ggplot() +
+#   #geom_line(data = test_df.tesla, aes(x= Date, y = Close, color = "Actual_Close")) + 
+#   geom_line(data = pred_uni, aes(x= ds, y = yhat, color = "Predicted")) + 
+#   geom_line(data = pred_uni, aes(x= ds, y = yhat_upper, color = "Upper_Limit")) + 
+#   geom_line(data = pred_uni, aes(x= ds, y = yhat_lower, color = "Lower_Limit")) + 
+#   
+#   scale_color_manual(values = c("Actual_Close" = "green", "Predicted" = "blue", "Upper_Limit" = "red", "Lower_Limit" = "red")) +
+#   theme_bw() + labs(title = "", x = "Date", y= "Closing Price", subtitle = "Tesla Stock - Actual Vs Predicted")
+#   
+
 ```
+## Analysis for Tesla stock using Uni-Variate Model
+```{r}
+
+latest_version <- readRDS(file = version.file)
+file.name <- paste("models/prophet/", "V",latest_version, "_TESLA", ".RSD", sep = "")
+print(file.name)
+
+#Loading model
+m <- readRDS(file=file.name)  # Load model
+
+# Creating data-frame for forecast
+future.df <- make_future_dataframe(m, periods = 60)
+tail(future.df)
+
+# Forecast
+forecast.tesla <- predict(m, future.df) 
+
+#Exploring forecast results
+pred_uni <- forecast.tesla[c("ds", "yhat", "yhat_lower", "yhat_upper")]
+tail(pred_uni)
+
+# Plot the model
+dyplot.prophet(m, forecast.tesla)
+prophet_plot_components(m, forecast.tesla)
+
+```
+## Analysis for Tesla stock using Uni-Variate Model
+```{r}
+
+latest_version <- readRDS(file = version.file)
+file.name <- paste("models/prophet/", "V",latest_version, "_APPLE", ".RSD", sep = "")
+print(file.name)
+
+#Loading model
+m <- readRDS(file=file.name)  # Load model
+
+# Creating data-frame for forecast
+future.df <- make_future_dataframe(m, periods = 60)
+tail(future.df)
+
+# Forecast
+forecast.apple <- predict(m, future.df) 
+
+#Exploring forecast results
+pred_uni <- forecast.apple[c("ds", "yhat", "yhat_lower", "yhat_upper")]
+tail(pred_uni)
+
+# Plot the model
+dyplot.prophet(m, forecast.apple)
+prophet_plot_components(m, forecast.apple)
+
+```
+
 
 ```{r}
 
@@ -163,7 +230,7 @@ create_model_multivariate <- function(){
   
 }
 
-create_model_multivariate()
+#create_model_multivariate()
 
 ```
 
