@@ -16,6 +16,7 @@ Import Required Libraries
 library(ggplot2) 
 library(Metrics) 
 library(plotly)  # for interactive plots 
+library(quantmod)
 theme_set(theme_minimal())  
 
 companies <- c("GOOGLE", "APPLE", "TESLA")
@@ -150,4 +151,189 @@ p <- ggplot(df) +
 
 p
 ```
+
+# Google Stock Analysis
+```{r}
+data <- stock.df[stock.df$Company.Name == "GOOGLE", ] 
+rownames(data)<- data$Date 
+
+data <- data[, c('Close', 'Open', 'High', 'Low', 'Volume', 'Adjusted')]
+head(data)
+
+chartSeries(data)
+
+# Add Moving average convergence divergence 
+addMACD()
+
+# Add Bollinger Bands to the stock price
+addBBands()
+
+# Add Commodity Channel Index 
+addCCI()
+
+# Add Directional Movement Indicator
+addADX()
+
+# Add Money flow Chart
+addCMF() 
+
+# Highest and Lowest Point of Price
+seriesHi(data[, c("Close")])
+seriesLo(data[, c("Close")])
+
+#Return Analysis
+# Daily Returns
+daily.return <- dailyReturn(data)
+tail(daily.return)
+
+# Weakly Returns
+weekly.return <- weeklyReturn(data)
+tail(weekly.return)
+
+# Monthly Returns
+monthly.return <- monthlyReturn(data)
+tail(monthly.return)
+
+# Yearly Returns
+yearly.return <- yearlyReturn(data)
+tail(yearly.return)
+
+
+#all returns
+all.returns <- allReturns(data)
+head(all.returns)
+
+
+```
+
+
+# Apple Stock Analysis
+
+```{r}
+
+data <- stock.df[stock.df$Company.Name == "APPLE", ] 
+rownames(data)<- data$Date 
+
+data <- data[, c('Close', 'Open', 'High', 'Low', 'Volume', 'Adjusted')]
+head(data)
+
+chartSeries(data)
+
+# Add Moving average convergence divergence 
+addMACD()
+
+# Add Bollinger Bands to the stock price
+addBBands()
+
+# Add Commodity Channel Index 
+addCCI()
+
+# Add Directional Movement Indicator
+addADX()
+
+# Add Money flow Chart
+addCMF() 
+
+# Highest and Lowest Point of Price
+seriesHi(data[, c("Close")])
+seriesLo(data[, c("Close")])
+
+#Return Analysis
+# Daily Returns
+daily.return <- dailyReturn(data)
+tail(daily.return)
+
+# Weakly Returns
+weekly.return <- weeklyReturn(data)
+tail(weekly.return)
+
+# Monthly Returns
+monthly.return <- monthlyReturn(data)
+tail(monthly.return)
+
+# Yearly Returns
+yearly.return <- yearlyReturn(data)
+tail(yearly.return)
+
+
+#all returns
+all.returns <- allReturns(data)
+head(all.returns)
+
+
+```
+
+
+
+#Tesla Stock Analysis
+
+```{r}
+data <- stock.df[stock.df$Company.Name == "TESLA", ] 
+rownames(data)<- data$Date 
+
+data <- data[, c('Close', 'Open', 'High', 'Low', 'Volume', 'Adjusted')]
+head(data)
+
+chartSeries(data)
+
+# Add Moving average convergence divergence 
+addMACD()
+
+# Add Bollinger Bands to the stock price
+addBBands()
+
+# Add Commodity Channel Index 
+addCCI()
+
+# Add Directional Movement Indicator
+addADX()
+
+# Add Money flow Chart
+addCMF() 
+
+# Highest and Lowest Point of Price
+seriesHi(data[, c("Close")])
+seriesLo(data[, c("Close")])
+
+#Return Analysis
+# Daily Returns
+daily.return <- dailyReturn(data)
+tail(daily.return)
+
+# Weakly Returns
+weekly.return <- weeklyReturn(data)
+tail(weekly.return)
+
+# Monthly Returns
+monthly.return <- monthlyReturn(data)
+tail(monthly.return)
+
+# Yearly Returns
+yearly.return <- yearlyReturn(data)
+tail(yearly.return)
+
+
+#all returns
+all.returns <- allReturns(data)
+head(all.returns)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
