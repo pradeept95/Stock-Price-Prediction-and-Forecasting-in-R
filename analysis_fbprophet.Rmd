@@ -25,7 +25,8 @@ version.file <- paste("models/prophet/", "version.RSD", sep = "")
 ```{r}
 
 # Load the dataset
-stock.df <- read.csv(file="data/all_company_close_stock.csv")
+stock.df <- read.csv(file="data/all_company_stock.csv")
+stock.df$Date <- as.Date(stock.df$Date, format="%Y-%m-%d")
 head(stock.df)
 tail(stock.df)
 
@@ -36,21 +37,21 @@ Creating models and adding to the models list;
 ```{r}
 
 create_version <- function(){ 
-    version <- 0;
+    version <- 1;
     saveRDS(version, file = version.file) 
 }
-# Uncomment to set the version number from 1
-#create_version()
+
+create_version()
 
 update_version <- function(){ 
   
     latest_version <- readRDS(file = version.file)
     print(latest_version)
     saveRDS(latest_version + 1, file = version.file) 
-}
- 
+} 
+
 create_model <- function(){ 
-  update_version();
+  #update_version();
   latest_version <- readRDS(file = version.file)
   for (company in companies) {
     
@@ -86,32 +87,312 @@ create_model <- function(){
   } 
   
 }
-
 #create_model()
 
-
 ```
- 
+
+## Analysis for Google stock using Uni-Variate Model
 ```{r}
 
 latest_version <- readRDS(file = version.file)
 file.name <- paste("models/prophet/", "V",latest_version, "_GOOGLE", ".RSD", sep = "")
+print(file.name)
+
+#Loading model
 m <- readRDS(file=file.name)  # Load model
 
 # Creating data-frame for forecast
-future.df <- make_future_dataframe(m, periods = 365)
+future.df <- make_future_dataframe(m, periods = 60)
 tail(future.df)
 
 # Forecast
-forecast.google <- predict(m, future.df)
-tail(forecast.google[c("ds", "yhat", "yhat_lower", "yhat_upper")])
+forecast.google <- predict(m, future.df) 
 
-```
-
-```{r}
+#Exploring forecast results
+pred_uni <- forecast.google[c("ds", "yhat", "yhat_lower", "yhat_upper")]
+tail(pred_uni)
 
 # Plot the model
 dyplot.prophet(m, forecast.google)
 prophet_plot_components(m, forecast.google)
 
+
+# pred_uni$ds <- as.Date(pred_uni$ds, format="%Y-%m-%d")
+# 
+# ggplot() +
+#   #geom_line(data = test_df.tesla, aes(x= Date, y = Close, color = "Actual_Close")) + 
+#   geom_line(data = pred_uni, aes(x= ds, y = yhat, color = "Predicted")) + 
+#   geom_line(data = pred_uni, aes(x= ds, y = yhat_upper, color = "Upper_Limit")) + 
+#   geom_line(data = pred_uni, aes(x= ds, y = yhat_lower, color = "Lower_Limit")) + 
+#   
+#   scale_color_manual(values = c("Actual_Close" = "green", "Predicted" = "blue", "Upper_Limit" = "red", "Lower_Limit" = "red")) +
+#   theme_bw() + labs(title = "", x = "Date", y= "Closing Price", subtitle = "Tesla Stock - Actual Vs Predicted")
+#   
+
 ```
+## Analysis for Tesla stock using Uni-Variate Model
+```{r}
+
+latest_version <- readRDS(file = version.file)
+file.name <- paste("models/prophet/", "V",latest_version, "_TESLA", ".RSD", sep = "")
+print(file.name)
+
+#Loading model
+m <- readRDS(file=file.name)  # Load model
+
+# Creating data-frame for forecast
+future.df <- make_future_dataframe(m, periods = 60)
+tail(future.df)
+
+# Forecast
+forecast.tesla <- predict(m, future.df) 
+
+#Exploring forecast results
+pred_uni <- forecast.tesla[c("ds", "yhat", "yhat_lower", "yhat_upper")]
+tail(pred_uni)
+
+# Plot the model
+dyplot.prophet(m, forecast.tesla)
+prophet_plot_components(m, forecast.tesla)
+
+```
+## Analysis for Tesla stock using Uni-Variate Model
+```{r}
+
+latest_version <- readRDS(file = version.file)
+file.name <- paste("models/prophet/", "V",latest_version, "_APPLE", ".RSD", sep = "")
+print(file.name)
+
+#Loading model
+m <- readRDS(file=file.name)  # Load model
+
+# Creating data-frame for forecast
+future.df <- make_future_dataframe(m, periods = 60)
+tail(future.df)
+
+# Forecast
+forecast.apple <- predict(m, future.df) 
+
+#Exploring forecast results
+pred_uni <- forecast.apple[c("ds", "yhat", "yhat_lower", "yhat_upper")]
+tail(pred_uni)
+
+# Plot the model
+dyplot.prophet(m, forecast.apple)
+prophet_plot_components(m, forecast.apple)
+
+```
+
+
+```{r}
+
+split_date <- Sys.Date()-60
+
+create_model_multivariate <- function(){ 
+  
+  for (company in companies) {
+    
+    print(paste("-------------------------", company, "--------------------------------------"))
+    print("Preparing data to build model")
+    
+    # Preparing data set for company
+    df <- stock.df[stock.df$Company.Name == company, ]
+    df <-  subset(df, as.Date(Date) < split_date) 
+    
+    head(df)
+    
+    # Using Date and Close Column; 
+    df <- df[, c('Date', 'Close', 'Open', "High", "Low")]
+    
+    # Changing Date to "ds" and Close to "y"
+    colnames(df) <- c('ds', 'y', 'Open', "High", "Low")
+    
+    
+    # Building prophet model
+    print("Building Model")
+    model <- prophet(daily.seasonality=TRUE)
+    model <- add_regressor(model, "Open")
+    model <- fit.prophet(model, df)
+  
+    # Adding to the model List
+    print("Saving Model")
+    
+    file.name <- paste("models/prophet/", "V",latest_version, "_", company, "_MULTI.RSD", sep = "")
+    print(file.name)
+    saveRDS(model, file= file.name)  # Save model
+    
+    #to read model; use following
+    #m <- readRDS(file="model.RDS")  # Load model
+   
+    print("Model creation successful")
+    
+  } 
+  
+}
+
+#create_model_multivariate()
+
+```
+
+## Analysis for Google stock
+```{r}
+set.seed(1)
+latest_version <- readRDS(file = version.file)
+file.name <- paste("models/prophet/", "V",latest_version, "_GOOGLE", "_MULTI.RSD", sep = "")
+print(file.name)
+
+#Loading model
+m_multi <- readRDS(file=file.name)  # Load model
+
+# Creating data-frame for forecast 
+# Preparing data set for company
+google_df.test <- stock.df[stock.df$Company.Name == "GOOGLE", ]
+future_df.test <-  subset(google_df.test, as.Date(Date) >= split_date) 
+
+# Using Date, Close, High and Low Column; 
+future_df.test <- future_df.test[, c('Date', 'Open', "High", "Low")]
+colnames(future_df.test) <- c('ds', 'Open', "High", "Low")
+ 
+head(future_df.test)
+ 
+# Forecast
+forecast.google.multi <- predict(m_multi, future_df.test) 
+
+# Plot the model
+dyplot.prophet(m_multi, forecast.google.multi) 
+
+# Plot Components
+prophet_plot_components(m_multi, forecast.google.multi)
+
+# Comparing predicted vs Actual
+test_df.google <- subset(google_df.test, as.Date(Date) >= split_date)
+f_df <- forecast.google.multi[c("ds", "yhat", "yhat_lower", "yhat_upper")]
+f_df$ds <- as.Date(f_df$ds, format="%Y-%m-%d")
+
+ggplot() +
+  geom_line(data = test_df.google, aes(x= Date, y = Close, color = "Actual_Close")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat, color = "Predicted")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat_upper, color = "Upper_Limit")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat_lower, color = "Lower_Limit")) + 
+  
+  scale_color_manual(values = c("Actual_Close" = "green", "Predicted" = "blue", "Upper_Limit" = "red", "Lower_Limit" = "red")) +
+  theme_bw() + labs(title = "", x = "Date", y= "Closing Price", subtitle = "Google Stock - Actual Vs Predicted")
+  
+```
+
+## Analysis for Tesla stock
+```{r}
+set.seed(1)
+latest_version <- readRDS(file = version.file)
+file.name <- paste("models/prophet/", "V",latest_version, "_TESLA", "_MULTI.RSD", sep = "")
+print(file.name)
+
+#Loading model
+m_multi <- readRDS(file=file.name)  # Load model
+
+# Creating data-frame for forecast
+# Preparing data set for company
+tesla_df.test <- stock.df[stock.df$Company.Name == "TESLA", ]
+future_df.test <-  subset(tesla_df.test, as.Date(Date) >= split_date) 
+
+# Using Date, Close, High and Low Column; 
+future_df.test <- future_df.test[, c('Date', 'Open', "High", "Low")]
+colnames(future_df.test) <- c('ds', 'Open', "High", "Low")
+ 
+head(future_df.test)
+ 
+# Forecast
+forecast.tesla.multi <- predict(m_multi, future_df.test) 
+
+# Plot the model
+dyplot.prophet(m_multi, forecast.tesla.multi) 
+
+# Plot Components
+prophet_plot_components(m_multi, forecast.tesla.multi)
+
+# Comparing predicted vs Actual
+test_df.tesla <- subset(tesla_df.test, as.Date(Date) >= split_date)
+f_df <- forecast.tesla.multi[c("ds", "yhat", "yhat_lower", "yhat_upper")]
+f_df$ds <- as.Date(f_df$ds, format="%Y-%m-%d")
+
+ggplot() +
+  geom_line(data = test_df.tesla, aes(x= Date, y = Close, color = "Actual_Close")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat, color = "Predicted")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat_upper, color = "Upper_Limit")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat_lower, color = "Lower_Limit")) + 
+  
+  scale_color_manual(values = c("Actual_Close" = "green", "Predicted" = "blue", "Upper_Limit" = "red", "Lower_Limit" = "red")) +
+  theme_bw() + labs(title = "", x = "Date", y= "Closing Price", subtitle = "Tesla Stock - Actual Vs Predicted")
+  
+```
+
+
+## Analysis for Apple stock
+```{r}
+set.seed(1)
+latest_version <- readRDS(file = version.file)
+file.name <- paste("models/prophet/", "V",latest_version, "_APPLE", "_MULTI.RSD", sep = "")
+print(file.name)
+
+#Loading model
+m_multi <- readRDS(file=file.name)  # Load model
+
+# Creating data-frame for forecast
+# Preparing data set for company
+apple_df.test <- stock.df[stock.df$Company.Name == "APPLE", ]
+future_df.test <-  subset(apple_df.test, as.Date(Date) >= split_date) 
+
+# Using Date, Close, High and Low Column; 
+future_df.test <- future_df.test[, c('Date', 'Open', "High", "Low")]
+colnames(future_df.test) <- c('ds', 'Open', "High", "Low")
+ 
+head(future_df.test)
+ 
+# Forecast
+forecast.apple.multi <- predict(m_multi, future_df.test) 
+
+# Plot the model
+dyplot.prophet(m_multi, forecast.apple.multi) 
+
+# Plot Components
+prophet_plot_components(m_multi, forecast.apple.multi)
+
+# Comparing predicted vs Actual
+test_df.apple <- subset(apple_df.test, as.Date(Date) >= split_date)
+f_df <- forecast.apple.multi[c("ds", "yhat", "yhat_lower", "yhat_upper")]
+f_df$ds <- as.Date(f_df$ds, format="%Y-%m-%d")
+
+ggplot() +
+  geom_line(data = test_df.apple, aes(x= Date, y = Close, color = "Actual_Close")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat, color = "Predicted")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat_upper, color = "Upper_Limit")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat_lower, color = "Lower_Limit")) + 
+  
+  scale_color_manual(values = c("Actual_Close" = "green", "Predicted" = "blue", "Upper_Limit" = "red", "Lower_Limit" = "red")) +
+  theme_bw() + labs(title = "", x = "Date", y= "Closing Price", subtitle = "Apple Stock - Actual Vs Predicted")
+  
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
