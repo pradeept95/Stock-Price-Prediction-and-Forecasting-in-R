@@ -1,0 +1,147 @@
+---
+title: "Arima_Model"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Load the dataset
+```{r }
+rm(list=ls())
+
+library(tidyquant)
+tesla_data <- getSymbols(Symbols = "TSLA", src = "yahoo", from = "2000-01-01", 
+                        to = Sys.Date(), auto.assign = FALSE)
+
+tesla_data <- Cl(tesla_data)
+```
+
+# STOCK CHARTING
+
+In order to begin analysing stock, here's the charting plus some technical indicators such as Simple Moving Average (20 and 100), Bollinger bands (20, sd = 1), Relative Strength Index (14 days), and Moving Average Convergence Divergence (12, 25) as the technical analysis before forecasting.
+```{r}
+chart_Series(tesla_data, col = "black")
+add_SMA(n = 100, on = 1, col = "red")
+add_SMA(n = 20, on = 1, col = "black")
+add_RSI(n = 14, maType = "SMA")
+add_BBands(n = 20, maType = "SMA", sd = 1, on = -1)
+add_MACD(fast = 12, slow = 25, signal = 9, maType = "SMA", histogram = TRUE)
+```
+# Checking whether data is Stationary or Not
+```{r}
+
+plot(tesla_data)
+```
+# Transforming the data with Log
+
+```{r}
+plot(log(tesla_data)) 
+```
+
+As the data has been log-transformed, we can clearly see that the series shows some upward and downward trend in a given time interval. 
+The stock also consist of some volatility and swing. These are the signs that the stock price movement is non-stationary. 
+Matter of fact, most of financial data is non-stationary (in which the mean, variance, autocorrelation, are not constant over time), but most of them follow random walk model with or without drift (RWM or RWD), 
+This is due to the stock tend to having trend and inconstant variance and mean in a given period. Given that we can guess that its a random walk, which means the current value (price) is equal to its price at time (t - 1) plus a random shock (White Noise), 
+hence we should difference the data with certain lag in order to fit ARIMA model as we’ll see later
+
+# Checking the Autocorrelation and Partial Autocorrelation Function
+This is where we check whether the current value is correlated to the past/yesterdays value.
+
+```{r}
+acf_tesla = acf(tesla_data, lag.max = 320)
+
+pacf_tesla=pacf(tesla_data, lag.max = 320)
+```
+
+
+# Making the Data Stationary
+```{r}
+tesla_data_diff= diff(log(tesla_data), lag =1) # Adjusting the mean
+
+tesla_data_diff = na.locf(tesla_data_diff, na.rm = TRUE,
+                      fromLast = TRUE) # Replacing missing values
+
+plot(tesla_data_diff)
+```
+# Testing the Stationarity using Augmented Dickey Fuller Test.
+Null Hypothesis = Non-Satationary
+Alternative Hyp = Stationary
+
+```{r}
+library(tseries)
+adf <- adf.test(tesla_data, alternative = c("stationary", "explosive"), 
+                k = 0)
+adf
+```
+Hence as p-value>0.05, we cannot RJ null and conclude that our undifferentiated tesla stock data is non-Stationary.
+```{r}
+adf <- adf.test(tesla_data_diff, alternative = c("stationary", "explosive"), 
+                k = 0)
+adf
+```
+AS the p-value<0.05, we can reject null and conclude that our differentiated tesla stock data is stationary.
+
+
+
+# Plotting ACF and PACF Curves
+```{r}
+acf_tesla  = acf(tesla_data_diff) # Determining the value of autoregressive AR(P)
+
+pacf_tesla = pacf(tesla_data_diff) # Determining the value of moving avg MA(p)
+```
+
+
+
+# Build the ARIMA Model
+R provides simple and automatic way to generate appropriate ARIMA(p, d, q) model using auto.arima() function in forecast package with the smallest Akaike Information Criterion (AIC), Bayes Information Criterion (BIC).
+Here we pass in our train data, difference (d = 1),stationary = TRUE
+```{r}
+library(forecast)
+set.seed(100)
+arima_model <- auto.arima(tesla_data_diff, stationary = TRUE, ic = c("aicc", "aic", "bic"), 
+                          trace = TRUE)
+
+summary(arima_model)
+
+checkresiduals(arima_model) ###diagnostic cheking
+```
+
+# Fitting the model and forecasting
+```{r}
+arima <- arima(tesla_data_diff, order = c(0, 0, 0))
+summary(arima)
+
+forecast_tesla <- forecast(arima, h = 365)
+plot(forecast_tesla)
+
+checkresiduals(arima)
+```
+Here our forecast for 365 days ahead shows straight line. This is due to nature of arima forecasting tends to be mean reversion. 
+The Ljung Box test shows that the model residuals are non-autocorrelated, suggesting there's no heterocedasticity problem and the model is good, otherwise we might consider GARCH model.
+# Forecating for 2021
+```{r}
+arima1 = arima(log(tesla_data[1:2650]), order=c(0,1,0))
+summary(arima1)
+
+forecast_1=forecast(arima1, h=365)
+a = ts(log(tesla_data))
+forecast_1 %>% autoplot()+autolayer(a)
+```
+
+
+
+
+
+Here while forecasting tesla stock prices from Jan 2021, our model was able to capture upward trend
+of tesla stock price which was displayed in the very first plot.
+# Forecasting for 1st week of november
+```{r}
+tesla_data[2857]
+arima1 = arima(log(tesla_data[1:2857]), order=c(0,1,0))
+summary(arima1)
+
+forecast_1=forecast(arima1, h=7)
+a = ts(log(tesla_data))
+forecast_1 %>% autoplot()+autolayer(a)
+
+```
