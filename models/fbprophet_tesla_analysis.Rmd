@@ -1,0 +1,336 @@
+---
+title: "Tesla Analysis"
+author: "Pradeep Raj Thapaliya"
+date: "12/5/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Split Setup and Libraries
+```{r}
+library(prophet)
+library(tidyverse)
+
+companies <- c("GOOGLE", "APPLE", "TESLA") 
+version.file <- paste("prophet/", "version.RSD", sep = "")
+split_date <- as.Date("2020-12-31") #Sys.Date()-60
+split_date_2 <- as.Date("2021-10-31") #Sys.Date()-60
+
+split_date
+split_date_2
+
+latest_version <- readRDS(file = version.file)
+latest_version
+
+```
+
+### Load Dataset
+```{r} 
+
+stock.df <- read.csv(file= "..//data/all_company_stock.csv")
+stock.df$Date <- as.Date(stock.df$Date, format="%Y-%m-%d")
+head(stock.df)
+tail(stock.df)
+
+```
+
+### Preparing Dataset
+```{r}
+
+df <- stock.df[stock.df$Company.Name == "TESLA", ]
+
+set.seed(1)
+# Train Dataset for Split 1
+df.train_split_1 <- subset(df, as.Date(Date) <= split_date) 
+head(df.train_split_1)
+tail(df.train_split_1)
+
+# Test Dataset for Split 1
+df.test_split_1 <-  subset(df, as.Date(Date) > split_date)
+head(df.test_split_1)
+tail(df.test_split_1)
+
+
+# Train Dataset for Split 2
+df.train_split_2 <-  subset(df, as.Date(Date) <= split_date_2)
+head(df.train_split_2)
+tail(df.train_split_2)
+
+# Test Dataset for Split 2
+df.test_split_2 <-  subset(df, as.Date(Date) > split_date_2)
+head(df.test_split_2)
+tail(df.test_split_2)
+
+```
+
+## Analysis for Tesla Stock using Univariate (fbprophet) Model
+
+```{r}
+
+cat("---------- Split Date : ", as.character(split_date), " -----------------------\n")
+ 
+file.name <- paste("prophet/", "V",latest_version, "_TESLA", ".RSD", sep = "")
+print(file.name)
+
+#Loading model
+m <- readRDS(file=file.name)  # Load model
+
+# Creating data-frame for forecast
+future.df <- make_future_dataframe(m, periods = 365) 
+tail(future.df)
+
+# Forecast
+f <- predict(m, future.df) 
+
+```
+
+```{r}
+
+# Plot the model
+#dyplot.prophet(m, f)
+prophet_plot_components(m, f)
+
+```
+
+
+```{r}
+
+#Exploring forecast results
+f_df <- f[c("ds", "yhat", "yhat_lower", "yhat_upper")]
+f_df$ds <- as.Date(f_df$ds, format="%Y-%m-%d") 
+
+f_df <- subset(f_df, as.Date(ds) > split_date) 
+
+ggplot() +
+  geom_line(data = df.test_split_1, aes(x= Date, y = Close, color = "Actual_Close")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat, color = "Predicted")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat_upper, color = "Upper_Limit")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat_lower, color = "Lower_Limit")) + 
+  
+  scale_color_manual(values = c("Actual_Close" = "green", "Predicted" = "blue", "Upper_Limit" = "red", "Lower_Limit" = "red")) +
+  theme_bw() + labs(title = "Tesla Stock - Actual Vs Predicted", x = "Date", y= "Closing Price", subtitle = "Univariate model- Prediction for 365 days")
+
+```
+
+### Cross Validation of the Model
+The cross-validation is done by selecting cutoff points in the history, and for each of them fitting the model using data only up to that cutoff point. We can then compare the forecasted values to the actual values.
+
+(1) initial - number of training data in the first cutoff
+(2) horizon - cross-validation to assess prediction performance on a horizon of units
+(3) period - after first cutoffs making prediction in every period units
+
+```{r}
+
+# df.cv <- cross_validation(m, initial = 60, period = 180, horizon = 60, units = 'days')
+# head(df.cv)
+# 
+# # Finding performance Matrices
+# df.p <- performance_metrics(df.cv)
+# head(df.p)
+# 
+# # Plot Mean absolute percentage error
+# # The blue line shows the MAPE, where the mean is taken over a rolling window of the dots.
+# plot_cross_validation_metric(df.cv, metric = 'mape')
+
+```
+ 
+
+
+
+
+
+### Analysis for Tesla Stock using Univariate (fbprophet) Model - 2
+
+```{r}
+
+cat("---------- Split Date : ", as.character(split_date_2), " -----------------------\n")
+
+file.name <- paste("prophet/", "V",latest_version, "_TESLA", "_2.RSD", sep = "")
+print(file.name)
+
+#Loading model
+m <- readRDS(file=file.name)  # Load model
+
+# Creating data-frame for forecast
+future.df <- make_future_dataframe(m, periods = 35) 
+tail(future.df)
+
+# Forecast
+f <- predict(m, future.df) 
+
+```
+
+```{r}
+
+# Plot the model
+#dyplot.prophet(m, f)
+prophet_plot_components(m, f)
+
+```
+
+
+```{r}
+
+#Exploring forecast results
+f_df <- f[c("ds", "yhat", "yhat_lower", "yhat_upper")]
+f_df$ds <- as.Date(f_df$ds, format="%Y-%m-%d") 
+
+f_df <- subset(f_df, as.Date(ds) > split_date_2)  
+
+ggplot() +
+  geom_line(data = df.test_split_2, aes(x= Date, y = Close, color = "Actual_Close")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat, color = "Predicted")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat_upper, color = "Upper_Limit")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat_lower, color = "Lower_Limit")) + 
+  
+  scale_color_manual(values = c("Actual_Close" = "green", "Predicted" = "blue", "Upper_Limit" = "red", "Lower_Limit" = "red")) +
+ theme_bw() + labs(title = "Tesla Stock - Actual Vs Predicted", x = "Date", y= "Closing Price", subtitle = "Univariate model- Prediction for 35 days")
+
+
+```
+
+
+### Cross Validation of the univariate model Model - 2
+
+```{r}
+
+# df.cv <- cross_validation(m, initial = 60, period = 180, horizon = 60, units = 'days')
+# head(df.cv)
+# 
+# # Finding performance Matrices
+# df.p <- performance_metrics(df.cv)
+# head(df.p)
+# 
+# # Plot Mean absolute percentage error
+# # The blue line shows the MAPE, where the mean is taken over a rolling window of the dots.
+# plot_cross_validation_metric(df.cv, metric = 'mape')
+
+```
+ 
+
+## Analysis for Tesla stock - Multivariate Model
+```{r}
+
+set.seed(1) 
+
+file.name <- paste("prophet/", "V",latest_version, "_TESLA", "_MULTI.RSD", sep = "")
+print(file.name)
+
+#Loading model
+m_multi <- readRDS(file=file.name)  # Load model
+
+# Creating data-frame for forecast 
+# Preparing data set for company 
+# Using Date, Close, High and Low Column; 
+future_df.test <- df.test_split_1[, c('Date', 'Open', "High", "Low")]
+colnames(future_df.test) <- c('ds', 'Open', "High", "Low")
+ 
+head(future_df.test)
+ 
+# Forecast
+f.multi <- predict(m_multi, future_df.test) 
+
+# Plot the model
+#dyplot.prophet(m_multi, f.multi) 
+
+# Plot Components
+prophet_plot_components(m_multi, f.multi)
+
+# Comparing predicted vs Actual 
+f_df <- f.multi[c("ds", "yhat", "yhat_lower", "yhat_upper")]
+f_df$ds <- as.Date(f_df$ds, format="%Y-%m-%d")
+
+ggplot() +
+  geom_line(data = df.test_split_1, aes(x= Date, y = Close, color = "Actual_Close")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat, color = "Predicted")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat_upper, color = "Upper_Limit")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat_lower, color = "Lower_Limit")) + 
+  
+  scale_color_manual(values = c("Actual_Close" = "green", "Predicted" = "blue", "Upper_Limit" = "red", "Lower_Limit" = "red")) +
+  theme_bw() + labs(title = "Tesla Stock - Actual Vs Predicted", x = "Date", y= "Closing Price", subtitle = "Multivariate model- Prediction for 365 days")
+```
+
+### Cross Validation of the Multivariate Model
+```{r}
+
+# # Adding Cross Validation
+# df.cv.multi <- cross_validation(m_multi, initial = 60, period = 180, horizon = 60, units = 'days')
+# head(df.cv.multi)
+# 
+# 
+# # Finding performance Matrices
+# df.p.multi <- performance_metrics(df.cv.multi)
+# head(df.p.multi)
+# 
+# # Plot Mean absolute percentage error 
+# plot_cross_validation_metric(df.cv.multi, metric = 'mape')
+
+```
+
+
+
+
+
+
+## Analysis for Tesla stock -  Multivariate Model -2
+```{r}
+
+set.seed(1) 
+
+file.name <- paste("prophet/", "V",latest_version, "_TESLA", "_MULTI_2.RSD", sep = "")
+print(file.name)
+
+#Loading model
+m_multi <- readRDS(file=file.name)  # Load model
+
+# Creating data-frame for forecast 
+# Preparing data set for company 
+# Using Date, Close, High and Low Column; 
+future_df.test <- df.test_split_2[, c('Date', 'Open', "High", "Low")]
+colnames(future_df.test) <- c('ds', 'Open', "High", "Low")
+ 
+head(future_df.test)
+ 
+# Forecast
+f.multi <- predict(m_multi, future_df.test) 
+
+# Plot the model
+#dyplot.prophet(m_multi, f.multi) 
+
+# Plot Components
+prophet_plot_components(m_multi, f.multi)
+
+# Comparing predicted vs Actual 
+f_df <- f.multi[c("ds", "yhat", "yhat_lower", "yhat_upper")]
+f_df$ds <- as.Date(f_df$ds, format="%Y-%m-%d")
+
+ggplot() +
+  geom_line(data = df.test_split_2, aes(x= Date, y = Close, color = "Actual_Close")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat, color = "Predicted")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat_upper, color = "Upper_Limit")) + 
+  geom_line(data = f_df, aes(x= ds, y = yhat_lower, color = "Lower_Limit")) + 
+  
+  scale_color_manual(values = c("Actual_Close" = "green", "Predicted" = "blue", "Upper_Limit" = "red", "Lower_Limit" = "red")) +
+   theme_bw() + labs(title = "Tesla Stock - Actual Vs Predicted", x = "Date", y= "Closing Price", subtitle = "Multivariate model- Prediction for 35 days")
+```
+
+### Cross Validation of the Multivariate Model
+```{r}
+
+# 
+# df.cv.multi <- cross_validation(m_multi, initial = 60, period = 180, horizon = 60, units = 'days')
+# head(df.cv.multi)
+# 
+# # Finding performance Matrices
+# df.p.multi <- performance_metrics(df.cv.multi)
+# head(df.p.multi)
+# 
+# # Plot Mean absolute percentage error 
+# plot_cross_validation_metric(df.cv.multi, metric = 'mape')
+
+```
+
+

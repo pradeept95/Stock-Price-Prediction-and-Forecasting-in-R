@@ -1,0 +1,247 @@
+---
+title: "fb_prophet"
+author: "Pradeep Raj Thapaliya"
+date: "10/30/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+#install.packages('prophet')
+
+
+library(prophet)
+library(tidyverse)
+
+companies <- c("GOOGLE", "APPLE", "TESLA") 
+version.file <- paste("models/prophet/", "version.RSD", sep = "")
+split_date <- as.Date("2020-12-31") #Sys.Date()-60
+split_date_2 <- as.Date("2021-10-31") #Sys.Date()-60
+
+split_date
+split_date_2
+```
+
+```{r}
+
+# Load the dataset
+stock.df <- read.csv(file="data/all_company_stock.csv")
+stock.df$Date <- as.Date(stock.df$Date, format="%Y-%m-%d")
+head(stock.df)
+tail(stock.df)
+
+```
+
+Creating models and adding to the models list;
+
+We are using the prophet function to fit the model. The argument is the historical dataframe. Here, we are creating multiple models for different company dataset and saved to the directory.
+
+```{r}
+
+create_version <- function(){ 
+    version <- 1;
+    saveRDS(version, file = version.file) 
+}
+
+create_version()
+
+update_version <- function(){ 
+  
+    latest_version <- readRDS(file = version.file)
+    print(latest_version)
+    saveRDS(latest_version + 1, file = version.file) 
+} 
+
+create_model <- function(){ 
+  #update_version();
+  latest_version <- readRDS(file = version.file)
+  for (company in companies) {
+    
+    set.seed(1)
+    
+    print(paste("-------------------------", company, "--------------------------------------"))
+    print("Preparing data to build model")
+    
+    # Preparing data set for company
+    df <- stock.df[stock.df$Company.Name == company, ]
+    
+    # Clip data-set for training
+    df <-  subset(df, as.Date(Date) <= split_date) 
+    
+    # Using Date and Close Column; 
+    df <- df[, c('Date', 'Close')]
+    tail(df)
+    
+    # Changing Date to "ds" and Close to "y"
+    colnames(df) <- c('ds', 'y')
+    
+    
+    # Building prophet model
+    print("Building Model")
+    model <- prophet(df, daily.seasonality=TRUE)
+  
+    # Adding to the model List
+    print("Saving Model")
+    
+    file.name <- paste("models/prophet/", "V",latest_version, "_", company, ".RSD", sep = "")
+    print(file.name)
+    saveRDS(model, file= file.name)  # Save model
+    
+    #to read model; use following
+    #m <- readRDS(file="model.RDS")  # Load model
+   
+    print("Model creation successful")
+    
+  } 
+  
+}
+
+
+create_model_2 <- function(){ 
+  #update_version();
+  latest_version <- readRDS(file = version.file)
+  for (company in companies) {
+    
+    set.seed(1)
+    
+    print(paste("-------------------------", company, "--------------------------------------"))
+    print("Preparing data to build model")
+    
+    # Preparing data set for company
+    df <- stock.df[stock.df$Company.Name == company, ]
+    
+    # Clip data-set for training
+    df <-  subset(df, as.Date(Date) <= split_date_2) 
+    
+    # Using Date and Close Column; 
+    df <- df[, c('Date', 'Close')]
+    tail(df)
+    
+    # Changing Date to "ds" and Close to "y"
+    colnames(df) <- c('ds', 'y')
+    
+    
+    # Building prophet model
+    print("Building Model")
+    model <- prophet(df, daily.seasonality=TRUE)
+  
+    # Adding to the model List
+    print("Saving Model")
+    
+    file.name <- paste("models/prophet/", "V",latest_version, "_", company, "_2.RSD", sep = "")
+    print(file.name)
+    saveRDS(model, file= file.name)  # Save model
+    
+    #to read model; use following
+    #m <- readRDS(file="model.RDS")  # Load model
+   
+    print("Model creation successful")
+    
+  } 
+  
+}
+
+
+create_model()
+create_model_2()
+
+```
+
+
+```{r}
+
+create_model_multivariate <- function(){ 
+  
+  for (company in companies) {
+    
+    print(paste("-------------------------", company, "--------------------------------------"))
+    print("Preparing data to build model")
+    
+    # Preparing data set for company
+    df <- stock.df[stock.df$Company.Name == company, ]
+    df <-  subset(df, as.Date(Date) <= split_date) 
+    
+    head(df)
+    
+    # Using Date and Close Column; 
+    df <- df[, c('Date', 'Close', 'Open', "High", "Low")]
+    
+    # Changing Date to "ds" and Close to "y"
+    colnames(df) <- c('ds', 'y', 'Open', "High", "Low")
+    
+    
+    # Building prophet model
+    print("Building Model")
+    model <- prophet(daily.seasonality=TRUE)
+    model <- add_regressor(model, "Open")
+    model <- add_regressor(model, "High")
+    model <- add_regressor(model, "Low")
+    model <- fit.prophet(model, df)
+  
+    # Adding to the model List
+    print("Saving Model")
+    
+    file.name <- paste("models/prophet/", "V",latest_version, "_", company, "_MULTI.RSD", sep = "")
+    print(file.name)
+    saveRDS(model, file= file.name)  # Save model
+    
+    #to read model; use following
+    #m <- readRDS(file="model.RDS")  # Load model
+   
+    print("Model creation successful")
+    
+  } 
+  
+}
+
+create_model_multivariate_2 <- function(){ 
+  
+  for (company in companies) {
+    
+    print(paste("-------------------------", company, "--------------------------------------"))
+    print("Preparing data to build model")
+    
+    # Preparing data set for company
+    df <- stock.df[stock.df$Company.Name == company, ]
+    df <-  subset(df, as.Date(Date) <= split_date_2) 
+    
+    head(df)
+    
+    # Using Date and Close Column; 
+    df <- df[, c('Date', 'Close', 'Open', "High", "Low")]
+    
+    # Changing Date to "ds" and Close to "y"
+    colnames(df) <- c('ds', 'y', 'Open', "High", "Low")
+    
+    
+    # Building prophet model
+    print("Building Model")
+    model <- prophet(daily.seasonality=TRUE)
+    model <- add_regressor(model, "Open")
+    model <- add_regressor(model, "High")
+    model <- add_regressor(model, "Low")
+    model <- fit.prophet(model, df)
+  
+    # Adding to the model List
+    print("Saving Model")
+    
+    file.name <- paste("models/prophet/", "V",latest_version, "_", company, "_MULTI_2.RSD", sep = "")
+    print(file.name)
+    saveRDS(model, file= file.name)  # Save model
+    
+    print("Model creation successful")
+    
+  } 
+  
+}
+
+
+create_model_multivariate()
+create_model_multivariate_2()
+
+```
+
