@@ -4,6 +4,7 @@ library(tidyquant)
 options("getSymbols.warning4.0"=FALSE)
 options("getSymbols.yahoo.warning"=FALSE)
 
+
 get_date_from_yahoo <- function(tickers, start_date, end_date) {
  
   getSymbols( tickers

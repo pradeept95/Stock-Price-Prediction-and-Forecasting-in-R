@@ -124,16 +124,16 @@ The cross-validation is done by selecting cutoff points in the history, and for 
 
 ```{r}
 
-# df.cv <- cross_validation(m, initial = 60, period = 180, horizon = 60, units = 'days')
-# head(df.cv)
-# 
-# # Finding performance Matrices
-# df.p <- performance_metrics(df.cv)
-# head(df.p)
-# 
-# # Plot Mean absolute percentage error
-# # The blue line shows the MAPE, where the mean is taken over a rolling window of the dots.
-# plot_cross_validation_metric(df.cv, metric = 'mape')
+df.cv <- cross_validation(m, initial = 60, period = 180, horizon = 60, units = 'days')
+head(df.cv)
+
+# Finding performance Matrices
+df.p <- performance_metrics(df.cv)
+head(df.p)
+
+# Plot Mean absolute percentage error
+# The blue line shows the MAPE, where the mean is taken over a rolling window of the dots.
+plot_cross_validation_metric(df.cv, metric = 'mape')
 
 ```
  
@@ -197,16 +197,16 @@ ggplot() +
 
 ```{r}
 
-# df.cv <- cross_validation(m, initial = 60, period = 180, horizon = 60, units = 'days')
-# head(df.cv)
-# 
-# # Finding performance Matrices
-# df.p <- performance_metrics(df.cv)
-# head(df.p)
-# 
-# # Plot Mean absolute percentage error
-# # The blue line shows the MAPE, where the mean is taken over a rolling window of the dots.
-# plot_cross_validation_metric(df.cv, metric = 'mape')
+df.cv <- cross_validation(m, initial = 60, period = 180, horizon = 60, units = 'days')
+head(df.cv)
+
+# Finding performance Matrices
+df.p <- performance_metrics(df.cv)
+head(df.p)
+
+# Plot Mean absolute percentage error
+# The blue line shows the MAPE, where the mean is taken over a rolling window of the dots.
+plot_cross_validation_metric(df.cv, metric = 'mape')
 
 ```
  
@@ -256,17 +256,17 @@ ggplot() +
 ### Cross Validation of the Multivariate Model
 ```{r}
 
-# # Adding Cross Validation
-# df.cv.multi <- cross_validation(m_multi, initial = 60, period = 180, horizon = 60, units = 'days')
-# head(df.cv.multi)
-# 
-# 
-# # Finding performance Matrices
-# df.p.multi <- performance_metrics(df.cv.multi)
-# head(df.p.multi)
-# 
-# # Plot Mean absolute percentage error 
-# plot_cross_validation_metric(df.cv.multi, metric = 'mape')
+# Adding Cross Validation
+df.cv.multi <- cross_validation(m_multi, initial = 60, period = 180, horizon = 60, units = 'days')
+head(df.cv.multi)
+
+
+# Finding performance Matrices
+df.p.multi <- performance_metrics(df.cv.multi)
+head(df.p.multi)
+
+# Plot Mean absolute percentage error
+plot_cross_validation_metric(df.cv.multi, metric = 'mape')
 
 ```
 
@@ -320,16 +320,16 @@ ggplot() +
 ### Cross Validation of the Multivariate Model
 ```{r}
 
-# 
-# df.cv.multi <- cross_validation(m_multi, initial = 60, period = 180, horizon = 60, units = 'days')
-# head(df.cv.multi)
-# 
-# # Finding performance Matrices
-# df.p.multi <- performance_metrics(df.cv.multi)
-# head(df.p.multi)
-# 
-# # Plot Mean absolute percentage error 
-# plot_cross_validation_metric(df.cv.multi, metric = 'mape')
+
+df.cv.multi <- cross_validation(m_multi, initial = 60, period = 180, horizon = 60, units = 'days')
+head(df.cv.multi)
+
+# Finding performance Matrices
+df.p.multi <- performance_metrics(df.cv.multi)
+head(df.p.multi)
+
+# Plot Mean absolute percentage error
+plot_cross_validation_metric(df.cv.multi, metric = 'mape')
 
 ```
 
